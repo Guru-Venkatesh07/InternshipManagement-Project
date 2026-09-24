@@ -1,0 +1,219 @@
+// Prisma schema for Internship Management System
+// Default: SQLite for seamless out-of-the-box local execution
+// For PostgreSQL production deployment, refer to schema.postgresql.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id @default(uuid())
+  name         String
+  email        String           @unique
+  passwordHash String
+  role         String           // STUDENT, EMPLOYER, FACULTY, ADMIN
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  studentProfile  StudentProfile?
+  employerProfile EmployerProfile?
+  facultyProfile  FacultyProfile?
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+}
+
+model StudentProfile {
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rollNumber       String            @unique
+  department       String
+  year             Int
+  cgpa             Float
+  skills           String            // Stored as comma-separated or JSON string
+  phone            String?
+  resumeFile       String?
+  facultyAdvisorId String?
+  facultyAdvisor   FacultyProfile?   @relation(fields: [facultyAdvisorId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  applications      Application[]
+  internshipRecords InternshipRecord[]
+  progressLogs      ProgressLog[]
+}
+
+model EmployerProfile {
+  id                 String              @id @default(uuid())
+  userId             String              @unique
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName        String
+  industry           String
+  description        String?
+  website            String?
+  address            String?
+  contactPerson      String
+  phone              String
+  verificationStatus String              @default("PENDING") // PENDING, VERIFIED, REJECTED
+  logoFile           String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  internships InternshipPosting[]
+}
+
+model FacultyProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facultyId   String   @unique
+  department  String
+  designation String
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  advisedStudents  StudentProfile[]
+  evaluationGrades EvaluationGrade[]
+}
+
+model InternshipPosting {
+  id                  String        @id @default(uuid())
+  employerId          String
+  employer            EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  title               String
+  description         String
+  departmentRequired  String
+  skillsRequired      String
+  eligibility         String
+  location            String
+  isRemote            Boolean       @default(false)
+  stipend             Float         @default(0)
+  openings            Int           @default(1)
+  startDate           DateTime?
+  endDate             DateTime?
+  applicationDeadline DateTime
+  status              String        @default("DRAFT") // DRAFT, PUBLISHED, CLOSED, COMPLETED
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  applications Application[]
+}
+
+model Application {
+  id             String            @id @default(uuid())
+  studentId      String
+  student        StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  internshipId   String
+  internship     InternshipPosting @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  resumeSnapshot String?
+  coverLetter    String?
+  status         String            @default("FACULTY_PENDING") // APPLIED, FACULTY_PENDING, UNDER_REVIEW, SHORTLISTED, INTERVIEW_SCHEDULED, SELECTED, REJECTED, ACCEPTED
+  facultyRemarks String?
+  employerRemarks String?
+  appliedAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  interview        Interview?
+  internshipRecord InternshipRecord?
+
+  @@unique([studentId, internshipId])
+}
+
+model Interview {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  roundName     String
+  scheduledDate String      // Stored formatted YYYY-MM-DD
+  scheduledTime String      // Stored HH:mm
+  mode          String      // ONLINE, IN_PERSON
+  meetingLink   String?
+  location      String?
+  result        String      @default("SCHEDULED") // SCHEDULED, PASSED, FAILED, RESCHEDULED
+  remarks       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model InternshipRecord {
+  id                      String            @id @default(uuid())
+  applicationId           String            @unique
+  application             Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  studentId               String
+  student                 StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  startDate               DateTime
+  endDate                 DateTime
+  industrySupervisorName  String
+  industrySupervisorEmail String
+  industrySupervisorPhone String?
+  status                  String            @default("ONGOING") // ONGOING, COMPLETED, TERMINATED
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  progressLogs     ProgressLog[]
+  evaluationGrades EvaluationGrade[]
+}
+
+model ProgressLog {
+  id                 String           @id @default(uuid())
+  internshipRecordId String
+  internshipRecord   InternshipRecord @relation(fields: [internshipRecordId], references: [id], onDelete: Cascade)
+  studentId          String
+  student            StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  weekNumber         Int
+  tasksCompleted     String
+  skillsGained       String
+  challenges         String
+  studentRemarks     String?
+  facultyFeedback    String?
+  submittedAt        DateTime         @default(now())
+  reviewedAt         DateTime?
+}
+
+model EvaluationGrade {
+  id                 String           @id @default(uuid())
+  internshipRecordId String
+  internshipRecord   InternshipRecord @relation(fields: [internshipRecordId], references: [id], onDelete: Cascade)
+  facultyId          String
+  faculty            FacultyProfile   @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  attendance         Float
+  technicalScore     Float
+  performanceScore   Float
+  communicationScore Float
+  overallScore       Float
+  grade              String           // A+, A, B+, B, C, D, F
+  feedback           String?
+  evaluationType     String           @default("FINAL") // MID_TERM, FINAL
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Notification {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message          String
+  notificationType String   // APPLICATION, INTERVIEW, OFFER, FEEDBACK, SYSTEM
+  referenceId      String?
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorUserId  String?
+  actor        User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  action       String
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  metadata     String?  // JSON string
+  createdAt    DateTime @default(now())
+}
