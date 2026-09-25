@@ -3,7 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
+import prisma from './config/db.js';
 
 import authRoutes from './routes/authRoutes.js';
 import internshipRoutes from './routes/internshipRoutes.js';
@@ -33,7 +35,7 @@ app.use(
 // Cross-Origin Resource Sharing
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || true,
     credentials: true,
   })
 );
@@ -47,8 +49,41 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Serve static uploaded files (resumes, logos)
+// Serve uploaded files (resumes, logos) from local disk, /tmp, or Supabase DB fallback
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+
+app.get('/uploads/:folder/:filename', async (req, res) => {
+  const { folder, filename } = req.params;
+
+  // 1. Try local disk
+  const localPath = path.resolve(__dirname, `../uploads/${folder}/${filename}`);
+  if (fs.existsSync(localPath)) {
+    return res.sendFile(localPath);
+  }
+
+  // 2. Try serverless /tmp
+  const tmpPath = path.resolve('/tmp', folder, filename);
+  if (fs.existsSync(tmpPath)) {
+    return res.sendFile(tmpPath);
+  }
+
+  // 3. Fallback to Supabase database StoredFile (for Vercel serverless)
+  try {
+    const stored = await prisma.storedFile.findUnique({
+      where: { filename },
+    });
+    if (stored) {
+      const buffer = Buffer.from(stored.data, 'base64');
+      res.setHeader('Content-Type', stored.mimetype || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      return res.send(buffer);
+    }
+  } catch (err) {
+    console.error('Error fetching file from database:', err.message);
+  }
+
+  return res.status(404).json({ success: false, message: 'File not found' });
+});
 
 // API Health Check
 app.get('/api/v1/health', (req, res) => {

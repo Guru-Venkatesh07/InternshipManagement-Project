@@ -1,25 +1,77 @@
-// Prisma schema for Internship Management System
-// Default: SQLite for seamless out-of-the-box local execution
-// For PostgreSQL production deployment, refer to schema.postgresql.prisma
-
+// Supabase / PostgreSQL Prisma Schema for Internship Management System
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  EMPLOYER
+  FACULTY
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PostingStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  COMPLETED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  FACULTY_PENDING
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  SELECTED
+  REJECTED
+  ACCEPTED
+}
+
+enum InterviewResult {
+  SCHEDULED
+  PASSED
+  FAILED
+  RESCHEDULED
+}
+
+enum PlacementStatus {
+  ONGOING
+  COMPLETED
+  TERMINATED
+}
+
+enum Grade {
+  A_PLUS @map("A+")
+  A
+  B_PLUS @map("B+")
+  B
+  C
+  D
+  F
 }
 
 model User {
-  id           String           @id @default(uuid())
+  id           String    @id @default(uuid())
   name         String
-  email        String           @unique
+  email        String    @unique
   passwordHash String
-  role         String           // STUDENT, EMPLOYER, FACULTY, ADMIN
-  isActive     Boolean          @default(true)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  role         Role
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   studentProfile  StudentProfile?
   employerProfile EmployerProfile?
@@ -36,7 +88,7 @@ model StudentProfile {
   department       String
   year             Int
   cgpa             Float
-  skills           String            // Stored as comma-separated or JSON string
+  skills           String
   phone            String?
   resumeFile       String?
   facultyAdvisorId String?
@@ -50,9 +102,9 @@ model StudentProfile {
 }
 
 model EmployerProfile {
-  id                 String              @id @default(uuid())
-  userId             String              @unique
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName        String
   industry           String
   description        String?
@@ -60,10 +112,10 @@ model EmployerProfile {
   address            String?
   contactPerson      String
   phone              String
-  verificationStatus String              @default("PENDING") // PENDING, VERIFIED, REJECTED
+  verificationStatus VerificationStatus @default(PENDING)
   logoFile           String?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   internships InternshipPosting[]
 }
@@ -99,7 +151,7 @@ model InternshipPosting {
   startDate           DateTime?
   endDate             DateTime?
   applicationDeadline DateTime
-  status              String        @default("DRAFT") // DRAFT, PUBLISHED, CLOSED, COMPLETED
+  status              PostingStatus @default(DRAFT)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -114,7 +166,7 @@ model Application {
   internship     InternshipPosting @relation(fields: [internshipId], references: [id], onDelete: Cascade)
   resumeSnapshot String?
   coverLetter    String?
-  status         String            @default("FACULTY_PENDING") // APPLIED, FACULTY_PENDING, UNDER_REVIEW, SHORTLISTED, INTERVIEW_SCHEDULED, SELECTED, REJECTED, ACCEPTED
+  status         ApplicationStatus @default(FACULTY_PENDING)
   facultyRemarks String?
   employerRemarks String?
   appliedAt      DateTime          @default(now())
@@ -127,35 +179,35 @@ model Application {
 }
 
 model Interview {
-  id            String      @id @default(uuid())
-  applicationId String      @unique
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            String          @id @default(uuid())
+  applicationId String          @unique
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   roundName     String
-  scheduledDate String      // Stored formatted YYYY-MM-DD
-  scheduledTime String      // Stored HH:mm
-  mode          String      // ONLINE, IN_PERSON
+  scheduledDate String
+  scheduledTime String
+  mode          String
   meetingLink   String?
   location      String?
-  result        String      @default("SCHEDULED") // SCHEDULED, PASSED, FAILED, RESCHEDULED
+  result        InterviewResult @default(SCHEDULED)
   remarks       String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model InternshipRecord {
-  id                      String            @id @default(uuid())
-  applicationId           String            @unique
-  application             Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id                      String          @id @default(uuid())
+  applicationId           String          @unique
+  application             Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   studentId               String
-  student                 StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student                 StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   startDate               DateTime
   endDate                 DateTime
   industrySupervisorName  String
   industrySupervisorEmail String
   industrySupervisorPhone String?
-  status                  String            @default("ONGOING") // ONGOING, COMPLETED, TERMINATED
-  createdAt               DateTime          @default(now())
-  updatedAt               DateTime          @updatedAt
+  status                  PlacementStatus @default(ONGOING)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
 
   progressLogs     ProgressLog[]
   evaluationGrades EvaluationGrade[]
@@ -188,9 +240,9 @@ model EvaluationGrade {
   performanceScore   Float
   communicationScore Float
   overallScore       Float
-  grade              String           // A+, A, B+, B, C, D, F
+  grade              Grade
   feedback           String?
-  evaluationType     String           @default("FINAL") // MID_TERM, FINAL
+  evaluationType     String           @default("FINAL")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }
@@ -200,7 +252,7 @@ model Notification {
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message          String
-  notificationType String   // APPLICATION, INTERVIEW, OFFER, FEEDBACK, SYSTEM
+  notificationType String
   referenceId      String?
   isRead           Boolean  @default(false)
   createdAt        DateTime @default(now())
@@ -214,6 +266,15 @@ model AuditLog {
   resourceType String
   resourceId   String?
   ipAddress    String?
-  metadata     String?  // JSON string
+  metadata     String?
   createdAt    DateTime @default(now())
+}
+
+// Backup file model for serverless persistence on Vercel
+model StoredFile {
+  id        String   @id @default(uuid())
+  filename  String   @unique
+  mimetype  String
+  data      String   // Base64-encoded file payload
+  createdAt DateTime @default(now())
 }

@@ -250,21 +250,71 @@ npm run dev
 
 ---
 
-## 12. PostgreSQL Production Setup (Optional)
-If you wish to run against a live PostgreSQL database instead of the default local SQLite:
-1. In `server/.env`, change `DATABASE_URL` to your PostgreSQL connection string:
-   ```env
-   DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/internship_db?schema=public"
-   ```
-2. Copy `server/prisma/schema.postgresql.prisma` over `server/prisma/schema.prisma`.
-3. Push schema and seed:
-   ```bash
-   cd server
-   npx prisma db push
-   node prisma/seed.js
-   ```
-
 ---
+
+## 12. Deploy to Supabase & Vercel (Direct from GitHub)
+
+The system is fully configured for continuous deployment on **Vercel** with a cloud **Supabase PostgreSQL** database.
+
+### Step 1: Create a Free Supabase Project
+1. Go to [supabase.com](https://supabase.com) and create a free project.
+2. Note your database password when creating the project.
+3. Once the database is provisioned, go to **Project Settings** -> **Database**.
+4. Scroll down to the **Connection string** section:
+   - Select **URI** tab.
+   - For **Connection Pooling** (Mode: Transaction, Port: `6543`), copy the connection string. This is your `DATABASE_URL`. Make sure it ends with `?pgbouncer=true`.
+     ```env
+     DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+     ```
+   - For **Direct connection** (Port: `5432`), copy the direct connection string. This is your `DIRECT_URL`.
+     ```env
+     DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres"
+     ```
+
+### Step 2: Push Schema & Seed Initial Data to Supabase
+You can initialize and seed the online Supabase database directly from your local terminal:
+```bash
+# 1. Set environment variables in your terminal (or add them to server/.env)
+# Windows PowerShell:
+$env:DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+$env:DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres"
+
+# 2. Push Prisma schema to create all tables and enums on Supabase:
+npm run db:push
+
+# 3. Seed demo accounts, faculty advisors, postings, and workflow records:
+npm run seed
+```
+
+### Step 3: Push Repository to GitHub
+If you haven't connected this directory to GitHub yet:
+```bash
+git add .
+git commit -m "Configure Supabase and Vercel serverless deployment"
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+git branch -M master
+git push -u origin master
+```
+
+### Step 4: Import and Deploy on Vercel
+1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+2. Click **"Add New..."** -> **"Project"**.
+3. Import your **`Internship_Management`** repository.
+4. Keep the **Framework Preset** as **Vite** or **Other** (the included `vercel.json` automatically manages build and routing).
+5. In the **Environment Variables** section, add the following 4 variables:
+   | Variable Name | Value | Note |
+   | :--- | :--- | :--- |
+   | `DATABASE_URL` | `postgresql://postgres.[REF]:[PASS]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true` | Supabase Transaction Pooler (Port 6543) |
+   | `DIRECT_URL` | `postgresql://postgres.[REF]:[PASS]@aws-0-[REGION].pooler.supabase.com:5432/postgres` | Supabase Direct Connection (Port 5432) |
+   | `JWT_SECRET` | `super-secret-college-internship-mgmt-jwt-key-2026-production` | Strong random secret key |
+   | `NODE_ENV` | `production` | Production mode |
+6. Click **Deploy**.
+7. Vercel will:
+   - Run `npx prisma generate` to generate the database client.
+   - Compile the React client application into `client/dist`.
+   - Mount the Express REST API as a serverless function at `/api`.
+   - Route `/uploads/*` through the dual local/database `StoredFile` engine.
+8. Your full-stack platform will be live at: `https://your-project.vercel.app`!
 
 ## 13. Automated Test Verification
 

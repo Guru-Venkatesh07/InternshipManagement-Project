@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('[SEED] Cleaning existing database...');
+  await prisma.storedFile.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.notification.deleteMany({});
   await prisma.evaluationGrade.deleteMany({});

@@ -2,11 +2,31 @@
   "name": "internship-management-system",
   "version": "1.0.0",
   "description": "Full-stack Internship Management and Tracking Platform",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
-    "seed": "npm run seed --prefix server",
-    "build": "npm run build --prefix client"
+    "build": "prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
+    "vercel-build": "prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
+    "db:generate": "prisma generate --schema=server/prisma/schema.prisma",
+    "db:push": "prisma db push --schema=server/prisma/schema.prisma",
+    "seed": "node server/prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.14.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "prisma": "^5.14.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
@@ -17,7 +37,8 @@
     "express",
     "react",
     "prisma",
-    "college-project"
+    "supabase",
+    "vercel"
   ],
   "author": "Internship Management Team",
   "license": "ISC"
