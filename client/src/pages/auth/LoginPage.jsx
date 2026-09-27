@@ -147,7 +147,7 @@ export const LoginPage = () => {
         </div>
 
         {/* Registration Links */}
-        <div className="text-center text-xs text-slate-500 space-y-1">
+        <div className="text-center text-xs text-slate-500 space-y-1.5">
           <p>
             New Student?{' '}
             <Link to="/register/student" className="font-semibold text-primary-600 hover:text-primary-800">
@@ -158,6 +158,12 @@ export const LoginPage = () => {
             Representing a Company?{' '}
             <Link to="/register/employer" className="font-semibold text-primary-600 hover:text-primary-800">
               Register as Employer
+            </Link>
+          </p>
+          <p>
+            Faculty Member?{' '}
+            <Link to="/register/faculty" className="font-semibold text-primary-600 hover:text-primary-800">
+              Register as Faculty
             </Link>
           </p>
         </div>

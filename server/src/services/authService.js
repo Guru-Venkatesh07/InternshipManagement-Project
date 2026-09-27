@@ -135,6 +135,68 @@ export const registerEmployer = async (data, ipAddress = null) => {
   };
 };
 
+export const registerFaculty = async (data, ipAddress = null) => {
+  const { name, email, password, facultyId, department, designation, phone } = data;
+
+  if (!name || !email || !password || !facultyId || !department || !designation) {
+    throw new AppError('Name, email, password, faculty ID, department, and designation are required.', 400);
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    throw new AppError('An account with this email already exists.', 409);
+  }
+
+  const existingFaculty = await prisma.facultyProfile.findUnique({ where: { facultyId } });
+  if (existingFaculty) {
+    throw new AppError('A faculty member with this Faculty ID already exists.', 409);
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: 'FACULTY',
+      facultyProfile: {
+        create: {
+          facultyId,
+          department,
+          designation,
+          phone: phone || null,
+        },
+      },
+    },
+    include: {
+      facultyProfile: true,
+    },
+  });
+
+  await logAuditEvent({
+    actorUserId: user.id,
+    action: 'REGISTER_FACULTY',
+    resourceType: 'User',
+    resourceId: user.id,
+    ipAddress,
+    metadata: { email, facultyId, department },
+  });
+
+  const token = signToken({ id: user.id, email: user.email, role: user.role });
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile: user.facultyProfile,
+    },
+  };
+};
+
 export const loginUser = async ({ email, password }, ipAddress = null) => {
   if (!email || !password) {
     throw new AppError('Email and password are required.', 400);

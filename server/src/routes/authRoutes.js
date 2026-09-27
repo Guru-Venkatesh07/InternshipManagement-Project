@@ -16,6 +16,7 @@ const authLimiter = rateLimit({
 
 router.post('/register/student', authLimiter, authController.registerStudent);
 router.post('/register/employer', authLimiter, authController.registerEmployer);
+router.post('/register/faculty', authLimiter, authController.registerFaculty);
 router.post('/login', authLimiter, authController.login);
 router.get('/me', verifyToken, authController.getMe);
 router.put('/change-password', verifyToken, authController.changePassword);

@@ -28,6 +28,20 @@ export const registerEmployer = async (req, res, next) => {
   }
 };
 
+export const registerFaculty = async (req, res, next) => {
+  try {
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const result = await authService.registerFaculty(req.body, ipAddress);
+    res.status(201).json({
+      success: true,
+      message: 'Faculty registration successful. Profile created.',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const login = async (req, res, next) => {
   try {
     const ipAddress = req.ip || req.connection.remoteAddress;

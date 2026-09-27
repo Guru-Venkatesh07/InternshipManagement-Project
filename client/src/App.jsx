@@ -8,6 +8,7 @@ import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterStudentPage } from './pages/auth/RegisterStudentPage';
 import { RegisterEmployerPage } from './pages/auth/RegisterEmployerPage';
+import { RegisterFacultyPage } from './pages/auth/RegisterFacultyPage';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -47,6 +48,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register/student" element={<RegisterStudentPage />} />
       <Route path="/register/employer" element={<RegisterEmployerPage />} />
+      <Route path="/register/faculty" element={<RegisterFacultyPage />} />
 
       {/* Protected Student Routes */}
       <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>

@@ -69,6 +69,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const registerFaculty = async (formData) => {
+    const res = await api.post('/auth/register/faculty', formData);
+    if (res.data?.success) {
+      const { token: receivedToken, user: receivedUser } = res.data.data;
+      setToken(receivedToken);
+      setUser(receivedUser);
+      localStorage.setItem('ims_token', receivedToken);
+      localStorage.setItem('ims_user', JSON.stringify(receivedUser));
+      return receivedUser;
+    }
+  };
+
   const refreshUser = async () => {
     try {
       const res = await api.get('/auth/me');
@@ -98,6 +110,7 @@ export const AuthProvider = ({ children }) => {
         login,
         registerStudent,
         registerEmployer,
+        registerFaculty,
         refreshUser,
         logout,
         isAuthenticated: !!user && !!token,
