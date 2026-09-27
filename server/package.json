@@ -10,8 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "node prisma/seed.js",
-    "postinstall": "prisma generate",
-    "vercel-build": "node -e \"console.log('Server ready')\""
+    "vercel-build": "echo ok"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
