@@ -9,10 +9,10 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "build": "prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
-    "vercel-build": "prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
-    "db:generate": "prisma generate --schema=server/prisma/schema.prisma",
-    "db:push": "prisma db push --schema=server/prisma/schema.prisma",
+    "build": "npx prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
+    "vercel-build": "npx prisma generate --schema=server/prisma/schema.prisma && npm run build --workspace=client",
+    "db:generate": "npx prisma generate --schema=server/prisma/schema.prisma",
+    "db:push": "npx prisma db push --schema=server/prisma/schema.prisma",
     "seed": "node server/prisma/seed.js"
   },
   "dependencies": {
