@@ -314,7 +314,7 @@ async function main() {
       performanceScore: 92.0,
       communicationScore: 90.0,
       overallScore: 93.5,
-      grade: 'A+',
+      grade: 'A_PLUS',
       feedback: 'Outstanding technical diligence and prompt weekly reporting. Candidate demonstrates exceptional mastery of full-stack engineering principles.',
       evaluationType: 'MID_TERM',
     },

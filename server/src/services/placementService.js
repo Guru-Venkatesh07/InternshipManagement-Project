@@ -208,10 +208,23 @@ export const submitEvaluation = async (data, actorUserId, facultyProfileId = nul
     throw new AppError('Internship record ID and letter grade (A+, A, B+, B, C, D, F) are required.', 400);
   }
 
-  const validGrades = ['A+', 'A', 'B+', 'B', 'C', 'D', 'F'];
+  const validGrades = ['A+', 'A', 'B+', 'B', 'C', 'D', 'F', 'A_PLUS', 'B_PLUS'];
   if (!validGrades.includes(grade)) {
-    throw new AppError(`Invalid grade '${grade}'. Allowed grades: ${validGrades.join(', ')}`, 400);
+    throw new AppError(`Invalid grade '${grade}'. Allowed grades: A+, A, B+, B, C, D, F`, 400);
   }
+
+  const gradeEnumMap = {
+    'A+': 'A_PLUS',
+    'A': 'A',
+    'B+': 'B_PLUS',
+    'B': 'B',
+    'C': 'C',
+    'D': 'D',
+    'F': 'F',
+    'A_PLUS': 'A_PLUS',
+    'B_PLUS': 'B_PLUS',
+  };
+  const prismaGrade = gradeEnumMap[grade] || grade;
 
   const record = await prisma.internshipRecord.findUnique({
     where: { id: internshipRecordId },
@@ -251,7 +264,7 @@ export const submitEvaluation = async (data, actorUserId, facultyProfileId = nul
       performanceScore: perf,
       communicationScore: comm,
       overallScore: overall,
-      grade,
+      grade: prismaGrade,
       feedback: feedback || 'Performance verified and graded.',
       evaluationType,
     },
