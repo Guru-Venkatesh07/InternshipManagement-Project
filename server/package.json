@@ -1,5 +1,5 @@
 {
-  "name": "ims-server",
+  "name": "server",
   "version": "1.0.0",
   "description": "Backend API for Internship Management System",
   "main": "src/server.js",
